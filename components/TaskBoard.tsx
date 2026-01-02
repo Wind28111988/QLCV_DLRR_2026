@@ -32,7 +32,6 @@ const TaskCard: React.FC<{
   setEditingTaskId, handleStartEdit, onDeleteTask, onUpdateStatus, onViewAttachment,
   onDragStart
 }) => {
-  const [isDraggable, setIsDraggable] = useState(true);
   const isEditing = editingTaskId === task.id;
 
   const formatDuration = (ms: number) => {
@@ -50,6 +49,16 @@ const TaskCard: React.FC<{
       case TaskComplexity.HARD: return 'bg-amber-100 text-amber-700 border-amber-200';
       default: return 'bg-sky-100 text-sky-700 border-sky-200';
     }
+  };
+
+  // Hàm xử lý kéo nội bộ: Nếu người dùng nhấn vào nút bấm, không cho phép bắt đầu kéo thẻ
+  const handleDragStart = (e: React.DragEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      e.preventDefault();
+      return;
+    }
+    onDragStart(e, task.id);
   };
 
   if (isEditing) {
@@ -80,8 +89,8 @@ const TaskCard: React.FC<{
 
   return (
     <div 
-      draggable={isDraggable} 
-      onDragStart={(e) => onDragStart(e, task.id)}
+      draggable={true} 
+      onDragStart={handleDragStart}
       className="bg-white p-4 md:p-5 shadow-sm border border-slate-200 rounded-[1.5rem] mb-4 group hover:border-indigo-200 transition-all hover:shadow-md cursor-grab active:cursor-grabbing relative"
     >
       <div className="flex justify-between items-start mb-4">
@@ -100,19 +109,20 @@ const TaskCard: React.FC<{
         <div className="flex items-center space-x-1">
           <button 
             type="button"
-            onMouseEnter={() => setIsDraggable(false)}
-            onMouseLeave={() => setIsDraggable(true)}
-            onClick={(e) => { e.stopPropagation(); handleStartEdit(task); }} 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              e.preventDefault();
+              handleStartEdit(task); 
+            }} 
             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
           >
             <Edit2 size={18} />
           </button>
           <button 
             type="button"
-            onMouseEnter={() => setIsDraggable(false)}
-            onMouseLeave={() => setIsDraggable(true)}
             onClick={(e) => { 
               e.stopPropagation(); 
+              e.preventDefault();
               onDeleteTask(task.id); 
             }} 
             className="p-2 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 rounded-xl transition-all shadow-sm border border-rose-100/50"
@@ -134,9 +144,11 @@ const TaskCard: React.FC<{
             <button 
               key={i} 
               type="button"
-              onMouseEnter={() => setIsDraggable(false)}
-              onMouseLeave={() => setIsDraggable(true)}
-              onClick={(e) => { e.stopPropagation(); onViewAttachment(att); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                e.preventDefault();
+                onViewAttachment(att); 
+              }}
               className="p-2 bg-slate-50 border border-slate-100 rounded-xl hover:bg-indigo-50 transition-colors"
             >
               <Paperclip size={12} className="text-slate-400" />
@@ -156,9 +168,11 @@ const TaskCard: React.FC<{
           {task.status === TaskStatus.TO_DO && (
             <button 
               type="button" 
-              onMouseEnter={() => setIsDraggable(false)}
-              onMouseLeave={() => setIsDraggable(true)}
-              onClick={(e) => { e.stopPropagation(); onUpdateStatus(task.id, TaskStatus.IN_PROGRESS); }} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                e.preventDefault();
+                onUpdateStatus(task.id, TaskStatus.IN_PROGRESS); 
+              }} 
               className="text-indigo-600 hover:scale-110 transition-transform active:scale-95"
             >
               <PlayCircle size={32} />
@@ -167,9 +181,11 @@ const TaskCard: React.FC<{
           {task.status === TaskStatus.IN_PROGRESS && (
             <button 
               type="button" 
-              onMouseEnter={() => setIsDraggable(false)}
-              onMouseLeave={() => setIsDraggable(true)}
-              onClick={(e) => { e.stopPropagation(); onUpdateStatus(task.id, TaskStatus.COMPLETED); }} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                e.preventDefault();
+                onUpdateStatus(task.id, TaskStatus.COMPLETED); 
+              }} 
               className="text-emerald-600 hover:scale-110 transition-transform active:scale-95"
             >
               <CheckCircle2 size={32} />
@@ -236,7 +252,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
   };
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData('text/plain', taskId);
+    e.dataTransfer.setData('taskId', taskId);
     e.dataTransfer.effectAllowed = 'move';
   };
   
@@ -248,7 +264,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
   
   const handleDrop = (e: React.DragEvent, status: TaskStatus) => {
     e.preventDefault();
-    const taskId = e.dataTransfer.getData('text/plain');
+    const taskId = e.dataTransfer.getData('taskId');
     if (taskId) {
       onUpdateStatus(taskId, status);
     }
