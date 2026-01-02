@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Task, TaskStatus, TaskComplexity, Attachment } from '../types';
-import { Clock, CheckCircle2, PlayCircle, Plus, Edit2, Trash2, Search, X, Check, Paperclip, FileText, Image as ImageIcon, Eye } from 'lucide-react';
+import { Clock, CheckCircle2, PlayCircle, Plus, Edit2, Trash2, Search, X, Check, Paperclip, FileText, Image as ImageIcon, Eye, GripVertical, GripHorizontal } from 'lucide-react';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -51,16 +51,6 @@ const TaskCard: React.FC<{
     }
   };
 
-  // Hàm xử lý kéo nội bộ: Nếu người dùng nhấn vào nút bấm, không cho phép bắt đầu kéo thẻ
-  const handleDragStart = (e: React.DragEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('button')) {
-      e.preventDefault();
-      return;
-    }
-    onDragStart(e, task.id);
-  };
-
   if (isEditing) {
     return (
       <div className="bg-white p-4 rounded-2xl shadow-xl border-2 border-indigo-500 mb-4 animate-in zoom-in-95">
@@ -89,51 +79,45 @@ const TaskCard: React.FC<{
 
   return (
     <div 
-      draggable={true} 
-      onDragStart={handleDragStart}
+      draggable 
+      onDragStart={(e) => onDragStart(e, task.id)}
       className="bg-white p-4 md:p-5 shadow-sm border border-slate-200 rounded-[1.5rem] mb-4 group hover:border-indigo-200 transition-all hover:shadow-md cursor-grab active:cursor-grabbing relative"
     >
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-3">
-          {/* Grip handle icons - 6 dots */}
-          <div className="grid grid-cols-2 gap-0.5 opacity-20 group-hover:opacity-40 transition-opacity">
-            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div><div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
-            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div><div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
-            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div><div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+          {/* Grip handle icons as seen in screenshot */}
+          <div className="flex flex-col space-y-0.5 opacity-20 group-hover:opacity-40 transition-opacity">
+            <div className="flex space-x-0.5"><div className="w-1 h-1 bg-slate-900 rounded-full"></div><div className="w-1 h-1 bg-slate-900 rounded-full"></div></div>
+            <div className="flex space-x-0.5"><div className="w-1 h-1 bg-slate-900 rounded-full"></div><div className="w-1 h-1 bg-slate-900 rounded-full"></div></div>
+            <div className="flex space-x-0.5"><div className="w-1 h-1 bg-slate-900 rounded-full"></div><div className="w-1 h-1 bg-slate-900 rounded-full"></div></div>
           </div>
-          <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase border tracking-wider ${getComplexityColor(task.complexity)}`}>
+          <span className={`text-[10px] font-black px-3 py-1 rounded-lg uppercase border tracking-wider ${getComplexityColor(task.complexity)}`}>
             {task.complexity}
           </span>
         </div>
-        
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1.5">
           <button 
             type="button"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              e.preventDefault();
-              handleStartEdit(task); 
-            }} 
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+            onPointerDown={(e) => e.stopPropagation()} // Quan trọng: Chặn kéo khi nhấn nút
+            onClick={(e) => { e.stopPropagation(); handleStartEdit(task); }} 
+            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
           >
             <Edit2 size={18} />
           </button>
           <button 
             type="button"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              e.preventDefault();
-              onDeleteTask(task.id); 
-            }} 
-            className="p-2 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 rounded-xl transition-all shadow-sm border border-rose-100/50"
+            onPointerDown={(e) => e.stopPropagation()} // Quan trọng: Chặn kéo khi nhấn nút
+            onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }} 
+            className="p-1.5 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 rounded-xl transition-all shadow-sm border border-rose-100/50"
           >
-            <Trash2 size={20} />
+            <Trash2 size={18} />
           </button>
         </div>
       </div>
       
-      <div className="pl-1 mb-5">
-        <p className="font-bold text-slate-700 leading-relaxed text-lg whitespace-pre-wrap break-words">
+      {/* Hiển thị đầy đủ nội dung - quan trọng cho công việc hoàn thành */}
+      <div className="pl-1 mb-4">
+        <p className="font-extrabold text-slate-700 leading-relaxed text-base whitespace-pre-wrap break-words">
           {task.content}
         </p>
       </div>
@@ -144,11 +128,8 @@ const TaskCard: React.FC<{
             <button 
               key={i} 
               type="button"
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                e.preventDefault();
-                onViewAttachment(att); 
-              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onViewAttachment(att); }}
               className="p-2 bg-slate-50 border border-slate-100 rounded-xl hover:bg-indigo-50 transition-colors"
             >
               <Paperclip size={12} className="text-slate-400" />
@@ -158,8 +139,8 @@ const TaskCard: React.FC<{
       )}
 
       <div className="flex items-center justify-between pt-4 border-t border-slate-100 pl-1">
-        <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-widest">
-          <Clock size={16} className="mr-2 text-slate-300" />
+        <div className="flex items-center text-[11px] font-black text-slate-400 uppercase tracking-widest">
+          <Clock size={14} className="mr-1.5 text-slate-300" />
           {task.status === TaskStatus.COMPLETED 
             ? formatDuration((task.completedTime || 0) - task.startTime) 
             : formatDuration(now - task.startTime)}
@@ -168,27 +149,21 @@ const TaskCard: React.FC<{
           {task.status === TaskStatus.TO_DO && (
             <button 
               type="button" 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                e.preventDefault();
-                onUpdateStatus(task.id, TaskStatus.IN_PROGRESS); 
-              }} 
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onUpdateStatus(task.id, TaskStatus.IN_PROGRESS); }} 
               className="text-indigo-600 hover:scale-110 transition-transform active:scale-95"
             >
-              <PlayCircle size={32} />
+              <PlayCircle size={28} />
             </button>
           )}
           {task.status === TaskStatus.IN_PROGRESS && (
             <button 
               type="button" 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                e.preventDefault();
-                onUpdateStatus(task.id, TaskStatus.COMPLETED); 
-              }} 
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onUpdateStatus(task.id, TaskStatus.COMPLETED); }} 
               className="text-emerald-600 hover:scale-110 transition-transform active:scale-95"
             >
-              <CheckCircle2 size={32} />
+              <CheckCircle2 size={28} />
             </button>
           )}
         </div>
@@ -223,6 +198,10 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    if (newAttachments.length + files.length > 5) {
+      alert("Tối đa 5 tệp đính kèm.");
+      return;
+    }
     const loaders = (Array.from(files) as File[]).map(file => {
       return new Promise<Attachment>((resolve) => {
         const reader = new FileReader();
@@ -251,17 +230,15 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
     }
   };
 
+  // Drag and Drop Logic
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData('taskId', taskId);
     e.dataTransfer.effectAllowed = 'move';
   };
-  
   const handleDragOver = (e: React.DragEvent, status: TaskStatus) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
     setDragOverCol(status);
   };
-  
   const handleDrop = (e: React.DragEvent, status: TaskStatus) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
@@ -272,9 +249,9 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
   };
 
   const columns = [
-    { title: "Cần làm", status: TaskStatus.TO_DO, color: "text-slate-500" },
-    { title: "Đang làm", status: TaskStatus.IN_PROGRESS, color: "text-indigo-600" },
-    { title: "Hoàn thành", status: TaskStatus.COMPLETED, color: "text-emerald-600" }
+    { title: "Cần làm", status: TaskStatus.TO_DO, color: "text-slate-500", bg: "bg-slate-100/50" },
+    { title: "Đang làm", status: TaskStatus.IN_PROGRESS, color: "text-indigo-600", bg: "bg-indigo-50/50" },
+    { title: "Hoàn thành", status: TaskStatus.COMPLETED, color: "text-emerald-600", bg: "bg-emerald-50/50" }
   ];
 
   return (
@@ -287,13 +264,13 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Nhập nội dung nhiệm vụ mới..."
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-indigo-500 text-base font-bold text-slate-700 shadow-inner transition-all"
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-indigo-500 text-base font-bold text-slate-700 placeholder:text-slate-300 transition-all shadow-inner"
             />
             <div className="flex gap-2">
               <select
                 value={newComplexity}
                 onChange={(e) => setNewComplexity(e.target.value as TaskComplexity)}
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 outline-none text-xs font-black uppercase transition-all"
+                className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 outline-none text-xs font-black uppercase tracking-widest text-slate-600"
               >
                 {Object.values(TaskComplexity).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -304,12 +281,23 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
               >
                 <Paperclip size={24} />
               </button>
-              <button type="submit" className="bg-indigo-600 text-white p-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg active:scale-95">
+              <button type="submit" className="bg-indigo-600 text-white p-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95">
                 <Plus size={28} />
               </button>
             </div>
           </div>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,application/pdf" />
+          
+          {newAttachments.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {newAttachments.map((att, idx) => (
+                <div key={idx} className="bg-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center space-x-2 border border-slate-200 shadow-sm">
+                  <span className="truncate max-w-[120px] text-slate-500">{att.name}</span>
+                  <button type="button" onClick={() => setNewAttachments(prev => prev.filter((_, i) => i !== idx))} className="text-rose-500 hover:scale-110"><X size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
         </form>
         <div className="mt-6 relative">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
@@ -318,7 +306,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm kiếm nhanh công việc..."
-            className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl pl-14 pr-6 py-3.5 text-sm font-bold outline-none focus:bg-white transition-all text-slate-600 shadow-sm"
+            className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl pl-14 pr-6 py-3.5 text-sm font-bold outline-none focus:bg-white transition-all text-slate-600"
           />
         </div>
       </div>
@@ -331,7 +319,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
             onDragLeave={() => setDragOverCol(null)}
             onDrop={(e) => handleDrop(e, col.status)}
             className={`flex-shrink-0 w-[88vw] md:w-1/3 snap-center rounded-[2.5rem] p-5 flex flex-col h-full transition-all duration-300 border ${
-              dragOverCol === col.status ? 'bg-indigo-50 border-2 border-dashed border-indigo-400 scale-[1.01]' : 'bg-slate-100/30 border-transparent'
+              dragOverCol === col.status ? 'bg-indigo-100/50 border-2 border-dashed border-indigo-400 scale-[1.01]' : 'bg-slate-100/30 border-transparent'
             }`}
           >
             <div className="flex items-center justify-between mb-6 px-3">
@@ -340,7 +328,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
                 {filteredTasks.filter(t => t.status === col.status).length}
               </span>
             </div>
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-visible">
               {filteredTasks.filter(t => t.status === col.status).map(task => (
                 <TaskCard 
                   key={task.id} 
@@ -361,9 +349,11 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onAddTask, onUpdateStatus,
                 />
               ))}
               {filteredTasks.filter(t => t.status === col.status).length === 0 && (
-                <div className="py-20 text-center flex flex-col items-center opacity-10">
-                  <Plus size={48} className="text-slate-400 mb-2" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">Trống</p>
+                <div className="py-20 text-center flex flex-col items-center opacity-20 grayscale">
+                  <div className="w-16 h-16 rounded-full border-4 border-dashed border-slate-400 mb-4 flex items-center justify-center">
+                    <Plus size={24} className="text-slate-400" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Trống</span>
                 </div>
               )}
             </div>
